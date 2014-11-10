@@ -39,7 +39,7 @@ namespace PSStudentSemesterScoreNotification
 
 		//樣板設定
 		string _temp1 = "低年級(1~2年級)";
-		string _temp2 = "高年級(3~6年級)";
+		string _temp2 = "中高年級(3~6年級)";
 
 		//等第對照
 		private DegreeMapper _degreeMapper;
@@ -68,7 +68,7 @@ namespace PSStudentSemesterScoreNotification
 				SaveFileDialog SaveFileDialog1 = new SaveFileDialog();
 
 				SaveFileDialog1.Filter = "Word (*.doc)|*.doc|所有檔案 (*.*)|*.*";
-				SaveFileDialog1.FileName = "評量學習表現通知單";
+				SaveFileDialog1.FileName = "評量學習表現通知單" + string.Format("{0:MM_dd_yy_H_mm_ss}", DateTime.Now);
 
 				if (SaveFileDialog1.ShowDialog() == DialogResult.OK)
 				{
@@ -119,6 +119,8 @@ namespace PSStudentSemesterScoreNotification
 			_degreeMapper = new DegreeMapper();
 			BGW.DoWork += new DoWorkEventHandler(BGW_DoWork);
 			BGW.RunWorkerCompleted += new RunWorkerCompletedEventHandler(BGW_RunWorkerCompleted);
+
+			cboExam.Text = Properties.Settings.Default.LastExam;
 		}
 
 		private void InitializeGrade()
@@ -145,7 +147,9 @@ namespace PSStudentSemesterScoreNotification
 				}
 				cboExam.Items.Add(row["exam_name"]);
 			}
-			cboExam.SelectedIndex = 0;
+
+			//if (cboExam.Items.Count > 0)
+				//cboExam.Text = cboExam.Items[0] + "" ;
 		}
 
 		private void InitializeSemester()
@@ -185,6 +189,9 @@ namespace PSStudentSemesterScoreNotification
 			_semester = cboSemester.Text;
 			_examName = cboExam.Text;
 			_exam = _subExamDic[cboExam.Text];
+
+			Properties.Settings.Default.LastExam = _examName;
+			Properties.Settings.Default.Save();
 
 			if (cboGrade.Text == _temp1)
 			{
@@ -251,15 +258,15 @@ namespace PSStudentSemesterScoreNotification
 					}
 				}
 			}
-			string sql = "select sce_take.id,sc_attend.ref_student_id,student.name,student.seat_no,class.class_name,course.course_name,course.subject,course.domain,sce_take.ref_exam_id,xpath_string(sce_take.extension,'//Extension/Score') score,credit from sc_attend";
+			string sql = "select sce_take.id,sc_attend.ref_student_id,student.name,student.seat_no,class.class_name,course.id as course_id,course.subject,course.domain,sce_take.ref_exam_id,xpath_string(sce_take.extension,'//Extension/Score') score,xpath_string(sce_take.extension,'//Extension/AssignmentScore') ascore,credit,xpath_string(exam_template.extension,'//Extension/ScorePercentage') percerntage from sc_attend";
 			sql += " join student on sc_attend.ref_student_id=student.id";
-			sql += " join class on student.ref_class_id=class.id ";
+			sql += " left join class on student.ref_class_id=class.id ";
 			sql += " join course on sc_attend.ref_course_id=course.id";
 			sql += " left join sce_take on sc_attend.id=sce_take.ref_sc_attend_id and sce_take.ref_exam_id=" + _exam;
+			sql += " left join exam_template on course.ref_exam_template_id=exam_template.id";
 			sql += " where student.id in (" + str + ") and course.school_year=" + _schoolYear + " and course.semester=" + _semester;
 
 			DataTable dt = queryHelper.Select(sql);
-			//studentid ,domain, List<subject>
 			Dictionary<string, Dictionary<string, List<mySubject>>> dsds = new Dictionary<string, Dictionary<string, List<mySubject>>>();
 			Dictionary<string, StudentData> data = new Dictionary<string, StudentData>();
 
@@ -281,9 +288,20 @@ namespace PSStudentSemesterScoreNotification
 					});
 				}
 
-				decimal credit, score;
+				decimal credit, score , ascore,scorePercentage,aScorePercentage;
 				bool hasCredit = decimal.TryParse("" + row["credit"], out credit);
 				bool hasScore = decimal.TryParse("" + row["score"], out score);
+				bool hasAScore = decimal.TryParse("" + row["ascore"], out ascore);
+				if (decimal.TryParse("" + row["percerntage"], out scorePercentage))
+				{
+					scorePercentage = scorePercentage / 100;
+				}
+				else 
+				{
+					scorePercentage = 0.5m;
+				}
+				aScorePercentage = (1 - scorePercentage);
+				score = score * scorePercentage + ascore * aScorePercentage;
 
 				if (!string.IsNullOrWhiteSpace(row["ref_exam_id"] + ""))
 				{
@@ -328,10 +346,10 @@ namespace PSStudentSemesterScoreNotification
 
 					foreach (mySubject subj in domain.Value)
 					{
-						if (subj.HasSceTake == true)
+						if (subj.HasSceTake)
 						{
 							mergeDic.Add(domain.Key + "_" + subj.subject + "_等第", _degreeMapper.GetDegreeByScore(subj.score));
-							mergeDic.Add(domain.Key + "_" + subj.subject + "_文字", GetTextByScore(subj.score));
+							mergeDic.Add(domain.Key + "_" + subj.subject + "_文字", GetTextByScore(Math.Round(subj.score, 0, MidpointRounding.AwayFromZero)));
 							decimal d = subj.score * subj.credit;
 							weithSum += d;
 							weightCount += subj.credit;
@@ -348,9 +366,14 @@ namespace PSStudentSemesterScoreNotification
 					{
 						weightAvg = weithSum / weightCount;
 						mergeDic.Add(domain.Key + "_平均_等第", _degreeMapper.GetDegreeByScore(weightAvg));
-						mergeDic.Add(domain.Key + "_文字", GetTextByScore(weightAvg));
+						mergeDic.Add(domain.Key + "_文字", GetTextByScore(Math.Round(weightAvg, 0, MidpointRounding.AwayFromZero)));
 					}
-					
+					else
+					{
+						mergeDic.Add(domain.Key + "_平均_等第", "＊");
+						mergeDic.Add(domain.Key + "_文字", "");
+					}
+
 				}
 
 				if (!mergeDic.ContainsKey("語文_國語_等第"))
@@ -389,7 +412,7 @@ namespace PSStudentSemesterScoreNotification
 
 		public string GetTextByScore(decimal score)
 		{
-			if (score > 90)
+			if (score >= 90)
 				return "表現優異";
 			if (score >= 80 && score < 90)
 				return "表現良好";
@@ -399,6 +422,11 @@ namespace PSStudentSemesterScoreNotification
 				return "需再加油";
 
 			return "有待改進";
+		}
+
+		private void MainForm_Load(object sender, EventArgs e)
+		{
+
 		}
 	}
 

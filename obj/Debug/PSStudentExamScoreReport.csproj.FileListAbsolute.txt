@@ -6,3 +6,4 @@ D:\Github\PSStudentExamScoreReport\obj\Debug\PSStudentExamScoreReport.dll
 D:\Github\PSStudentExamScoreReport\obj\Debug\PSStudentExamScoreReport.pdb
 D:\Github\PSStudentExamScoreReport\obj\Debug\PSStudentSemesterScoreNotification.MainForm.resources
 D:\Github\PSStudentExamScoreReport\obj\Debug\PSStudentSemesterScoreNotification.Properties.Resources.resources
+D:\Github\PSStudentExamScoreReport\bin\Debug\PSStudentExamScoreReport.dll.config

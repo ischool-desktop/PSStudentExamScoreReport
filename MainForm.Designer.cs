@@ -34,10 +34,10 @@
 			this.labelX2 = new DevComponents.DotNetBar.LabelX();
 			this.btn_Print = new DevComponents.DotNetBar.ButtonX();
 			this.btn_Exit = new DevComponents.DotNetBar.ButtonX();
-			this.cboExam = new DevComponents.DotNetBar.Controls.ComboBoxEx();
 			this.labelX3 = new DevComponents.DotNetBar.LabelX();
 			this.labelX4 = new DevComponents.DotNetBar.LabelX();
 			this.cboGrade = new DevComponents.DotNetBar.Controls.ComboBoxEx();
+			this.cboExam = new DevComponents.DotNetBar.Controls.ComboBoxEx();
 			this.SuspendLayout();
 			// 
 			// cboSemester
@@ -120,19 +120,6 @@
 			this.btn_Exit.Text = "離開";
 			this.btn_Exit.Click += new System.EventHandler(this.btn_Exit_Click);
 			// 
-			// cboExam
-			// 
-			this.cboExam.DisplayMember = "Text";
-			this.cboExam.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
-			this.cboExam.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-			this.cboExam.FormattingEnabled = true;
-			this.cboExam.ItemHeight = 19;
-			this.cboExam.Location = new System.Drawing.Point(82, 45);
-			this.cboExam.Name = "cboExam";
-			this.cboExam.Size = new System.Drawing.Size(185, 25);
-			this.cboExam.Style = DevComponents.DotNetBar.eDotNetBarStyle.StyleManagerControlled;
-			this.cboExam.TabIndex = 7;
-			// 
 			// labelX3
 			// 
 			this.labelX3.BackColor = System.Drawing.Color.Transparent;
@@ -174,6 +161,21 @@
 			this.cboGrade.Style = DevComponents.DotNetBar.eDotNetBarStyle.StyleManagerControlled;
 			this.cboGrade.TabIndex = 10;
 			// 
+			// cboExam
+			// 
+			this.cboExam.DataBindings.Add(new System.Windows.Forms.Binding("Text", global::PSStudentSemesterScoreNotification.Properties.Settings.Default, "LastExam", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
+			this.cboExam.DisplayMember = "Text";
+			this.cboExam.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
+			this.cboExam.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+			this.cboExam.FormattingEnabled = true;
+			this.cboExam.ItemHeight = 19;
+			this.cboExam.Location = new System.Drawing.Point(82, 45);
+			this.cboExam.Name = "cboExam";
+			this.cboExam.Size = new System.Drawing.Size(185, 25);
+			this.cboExam.Style = DevComponents.DotNetBar.eDotNetBarStyle.StyleManagerControlled;
+			this.cboExam.TabIndex = 7;
+			this.cboExam.Text = global::PSStudentSemesterScoreNotification.Properties.Settings.Default.LastExam;
+			// 
 			// MainForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 17F);
@@ -191,7 +193,8 @@
 			this.Controls.Add(this.cboSemester);
 			this.DoubleBuffered = true;
 			this.Name = "MainForm";
-			this.Text = "學期成績通知單";
+			this.Text = "個人評量成績單";
+			this.Load += new System.EventHandler(this.MainForm_Load);
 			this.ResumeLayout(false);
 
 		}
