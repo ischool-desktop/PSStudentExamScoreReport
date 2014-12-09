@@ -300,18 +300,21 @@ namespace PSStudentSemesterScoreNotification
 				{
 					scorePercentage = 0.5m;
 				}
+				score = Math.Round(score, 0, MidpointRounding.AwayFromZero);
+				ascore = Math.Round(ascore, 0, MidpointRounding.AwayFromZero);
+
 				aScorePercentage = (1 - scorePercentage);
-				score = score * scorePercentage + ascore * aScorePercentage;
+				decimal totalScore = score * scorePercentage + ascore * aScorePercentage;
 
 				if (!string.IsNullOrWhiteSpace(row["ref_exam_id"] + ""))
 				{
-					if (hasCredit && hasScore)
+					if (hasCredit && hasScore && hasAScore)
 					{
 						mySubject subj = new mySubject();
 						subj.domain = row["domain"] + "";
 						subj.subject = row["subject"] + "";
 						subj.credit = credit;
-						subj.score = score;
+						subj.score = totalScore;
 						subj.HasSceTake = true;
 						dsds[id][domain].Add(subj);
 					}
@@ -348,8 +351,11 @@ namespace PSStudentSemesterScoreNotification
 					{
 						if (subj.HasSceTake)
 						{
-							mergeDic.Add(domain.Key + "_" + subj.subject + "_等第", _degreeMapper.GetDegreeByScore(subj.score));
-							mergeDic.Add(domain.Key + "_" + subj.subject + "_文字", GetTextByScore(Math.Round(subj.score, 0, MidpointRounding.AwayFromZero)));
+							//if (!mergeDic.ContainsKey(domain.Key + "_" + subj.subject + "_等第"))
+							//{
+								mergeDic.Add(domain.Key + "_" + subj.subject + "_等第", _degreeMapper.GetDegreeByScore(subj.score));
+								mergeDic.Add(domain.Key + "_" + subj.subject + "_文字", GetTextByScore(Math.Round(subj.score, 0, MidpointRounding.AwayFromZero)));
+							//}
 							decimal d = subj.score * subj.credit;
 							weithSum += d;
 							weightCount += subj.credit;
